@@ -1,0 +1,58 @@
+From 4c9f594d0680ea4539b1ea617b5acc03dc4db1d9 Mon Sep 17 00:00:00 2001
+From: Tom Geelen <t.f.g.geelen@gmail.com>
+Date: Wed, 11 Mar 2026 09:36:39 +0100
+Subject: [PATCH] pass Yocto CMake args to bundled LibRaw build
+
+The rawpy setup.py build launches its own nested CMake configure for
+the bundled LibRaw sources, but it ignores CMAKE_ARGS from the outer
+BitBake environment.
+
+In Yocto builds this drops the toolchain/sysroot configuration for the
+nested CMake invocation, which leaves MATH_LIBRARY unresolved and causes
+the LibRaw configure step to fail with MATH_LIBRARY-NOTFOUND.
+
+Append environment-provided CMAKE_ARGS to the rawpy CMake command so the
+nested build inherits the expected cross-build settings.
+
+Signed-off-by: Tom Geelen <t.f.g.geelen@gmail.com>
+Upstream-Status: Inappropriate [oe-specific]
+---
+ setup.py | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+diff --git a/setup.py b/setup.py
+index 8e00dc3..ac3a0dd 100644
+--- a/setup.py
++++ b/setup.py
+@@ -3,6 +3,7 @@ from setuptools.command.build_ext import build_ext as _build_ext
+ import subprocess
+ import errno
+ import os
++import shlex
+ import shutil
+ import sys
+ import glob
+@@ -102,6 +103,14 @@ def get_install_dir():
+     return os.path.join(get_cmake_build_dir(), "install")
+ 
+ 
++def get_env_cmake_args():
++    cmake_args = os.environ.get("CMAKE_ARGS", "")
++    if not cmake_args:
++        return []
++
++    return shlex.split(cmake_args)
++
++
+ def windows_libraw_compile():
+     clone_submodules()
+ 
+@@ -259,6 +268,8 @@ def unix_libraw_compile():
+             ]
+         )
+ 
++    cmake_args.extend(get_env_cmake_args())
++
+     cmds = [" ".join(cmake_args), "cmake --build . --target install"]
+ 
+     for cmd in cmds:

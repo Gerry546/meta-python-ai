@@ -6,7 +6,9 @@ DEPENDS = "libraw python3-cmake-native python3-numpy-native python3-numpy"
 
 inherit cmake pkgconfig python_setuptools_build_meta cython
 
-SRC_URI = "git://github.com/letmaik/rawpy.git;protocol=https;branch=main"
+SRC_URI = "git://github.com/letmaik/rawpy.git;protocol=https;branch=main \
+           file://0001-pass-Yocto-CMake-args-to-bundled-LibRaw-build.patch \
+           "
 
 # This is a post-0.26.1 commit that modernizes the build
 SRCREV = "e333e155ade91578fbc2b0de059eec6483cb675d"
